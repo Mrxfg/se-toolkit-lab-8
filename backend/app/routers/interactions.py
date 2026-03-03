@@ -11,7 +11,7 @@ from app.models.interaction import InteractionLog, InteractionLogCreate, Interac
 router = APIRouter()
 
 
-def _filter_by_max_item_id(
+def filter_by_max_item_id(
     interactions: list[InteractionLog], max_item_id: int | None
 ) -> list[InteractionLog]:
     if max_item_id is None:
@@ -26,7 +26,7 @@ async def get_interactions(
 ):
     """Get all interactions, optionally filtered by maximum item ID."""
     interactions = await read_interactions(session)
-    return _filter_by_max_item_id(interactions, max_item_id)
+    return filter_by_max_item_id(interactions, max_item_id)
 
 
 @router.post("/", response_model=InteractionLog, status_code=201)
