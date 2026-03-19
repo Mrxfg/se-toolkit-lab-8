@@ -251,28 +251,16 @@ It can happen that commits in [`<branch>`](./git.md#branch) on [`<remote>`](./gi
 
 ## Hard reset the `<branch>`
 
+> [!NOTE]
+>
+> This operation will make your local `<branch>` match the `<branch>` on `<remote>`.
+
 > [!CAUTION]
 > This operation discards all uncommitted changes and local commits that are not on the [`<remote>`](./git.md#remote-placeholder).
 
-1. [Switch to the `<branch>`](#switch-to-the-branch).
+1. [Fetch the latest changes](#fetch-the-latest-changes-using-the-vs-code-terminal).
 
-2. To fetch the latest state of the `<remote>`,
-
-   [run in the `VS Code Terminal`](./vs-code.md#run-a-command-in-the-vs-code-terminal):
-
-   ```terminal
-   git fetch <remote>
-   ```
-
-   Replace the placeholder [`<remote>`](./git.md#remote-placeholder).
-
-   Example:
-
-   ```terminal
-   git fetch origin
-   ```
-
-3. To hard reset the local `<branch>` to match the `<branch>` on `<remote>`,
+2. To hard reset the local `<branch>`,
 
    [run in the `VS Code Terminal`](./vs-code.md#run-a-command-in-the-vs-code-terminal):
 
