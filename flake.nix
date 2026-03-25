@@ -30,7 +30,6 @@
               "1-front-tools" = [
                 pkgs.nodejs_25
                 pkgs.pnpm
-                pkgs.flutter
               ];
               "2-back-tools" = [
                 pkgs.uv
