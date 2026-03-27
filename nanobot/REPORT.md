@@ -70,3 +70,19 @@ You can now query the nanobot agent for:
 | Lab 06 — Build Your Own Agent | 50.92% | 245 | 3,175 |
 | Lab 07 — Build a Client with an AI Coding Agent | 67.43% | 237 | 2,733 |
 | lab-08 | 69.58% | 56 | 322 |
+
+## Task 2A — Deployed agent
+
+Nanobot gateway started successfully:
+```
+nanobot-1 | 🐈 Starting nanobot gateway version 0.1.4.post6 on port 18790...
+```
+
+## Task 2B — Web client
+
+WebSocket test:
+```
+{"type":"text","content":"Here are the available labs:\n\n1. **Lab 01** – Products, Architecture & Roles\n2. **Lab 02** — Run, Fix, and Deploy a Backend Service\n...","format":"markdown"}
+```
+
+Flutter client accessible at http://10.93.25.213:42002/flutter — agent responds to messages via WebSocket channel.
