@@ -217,7 +217,13 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[TextCon
 
 async def main(base_url: str | None = None) -> None:
     global _base_url
+    global VICTORIALOGS_URL, VICTORIATRACES_URL
+    global VICTORIALOGS_URL, VICTORIATRACES_URL
     _base_url = base_url or os.environ.get("NANOBOT_LMS_BACKEND_URL", "")
+    VICTORIALOGS_URL = os.environ.get("NANOBOT_LOGS_BASE_URL", "http://victorialogs:9428")
+    VICTORIATRACES_URL = os.environ.get("NANOBOT_TRACES_BASE_URL", "http://victoriatraces:10428")
+    VICTORIALOGS_URL = os.environ.get("NANOBOT_LOGS_BASE_URL", "http://victorialogs:9428")
+    VICTORIATRACES_URL = os.environ.get("NANOBOT_TRACES_BASE_URL", "http://victoriatraces:10428")
     async with stdio_server() as (read_stream, write_stream):
         init_options = server.create_initialization_options()
         await server.run(read_stream, write_stream, init_options)
@@ -225,3 +231,118 @@ async def main(base_url: str | None = None) -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+
+# ---------------------------------------------------------------------------
+# Observability tools — VictoriaLogs + VictoriaTraces
+# ---------------------------------------------------------------------------
+
+import httpx
+
+VICTORIALOGS_URL = ""
+VICTORIATRACES_URL = ""
+
+
+class _LogsSearchArgs(BaseModel):
+    query: str = Field(default="*", description="LogsQL query string, e.g. 'level:error'")
+    limit: int = Field(default=20, ge=1, le=200, description="Max log entries to return.")
+    time_range: str = Field(default="1h", description="Time range, e.g. '1h', '30m', '24h'.")
+
+
+class _LogsErrorCountArgs(BaseModel):
+    service: str = Field(default="", description="Service name to filter by. Empty = all.")
+    time_range: str = Field(default="1h", description="Time range, e.g. '1h', '30m'.")
+
+
+class _TracesListArgs(BaseModel):
+    service: str = Field(default="Learning Management Service", description="Service name.")
+    limit: int = Field(default=10, ge=1, le=100, description="Max traces to return.")
+
+
+class _TracesGetArgs(BaseModel):
+    trace_id: str = Field(description="Trace ID to fetch.")
+
+
+async def _logs_search(args: _LogsSearchArgs) -> list[TextContent]:
+    url = f"{VICTORIALOGS_URL}/select/logsql/query"
+    params = {"query": args.query, "limit": args.limit, "start": f"-{args.time_range}"}
+    async with httpx.AsyncClient(timeout=10) as client:
+        resp = await client.get(url, params=params)
+        resp.raise_for_status()
+    lines = [line for line in resp.text.strip().split("\n") if line]
+    entries = []
+    for line in lines:
+        try:
+            entries.append(json.loads(line))
+        except Exception:
+            entries.append({"raw": line})
+    return [TextContent(type="text", text=json.dumps(entries, ensure_ascii=False))]
+
+
+async def _logs_error_count(args: _LogsErrorCountArgs) -> list[TextContent]:
+    if args.service:
+        query = f'_stream:{{service.name="{args.service}"}} AND severity:ERROR'
+    else:
+        query = "severity:ERROR"
+    url = f"{VICTORIALOGS_URL}/select/logsql/query"
+    params = {"query": query, "limit": 200, "start": f"-{args.time_range}"}
+    async with httpx.AsyncClient(timeout=10) as client:
+        resp = await client.get(url, params=params)
+        resp.raise_for_status()
+    lines = [line for line in resp.text.strip().split("\n") if line]
+    count = len([l for l in lines if l])
+    result = {"error_count": count, "service": args.service or "all", "time_range": args.time_range}
+    return [TextContent(type="text", text=json.dumps(result, ensure_ascii=False))]
+
+
+async def _traces_list(args: _TracesListArgs) -> list[TextContent]:
+    url = f"{VICTORIATRACES_URL}/jaeger/api/traces"
+    params = {"service": args.service, "limit": args.limit}
+    async with httpx.AsyncClient(timeout=10) as client:
+        resp = await client.get(url, params=params)
+        resp.raise_for_status()
+    data = resp.json()
+    traces = data.get("data", [])
+    simplified = []
+    for t in traces:
+        spans = t.get("spans", [])
+        errors = sum(1 for s in spans if any(
+            tag.get("key") == "error" and tag.get("value") for tag in s.get("tags", [])
+        ))
+        simplified.append({
+            "traceID": t.get("traceID"),
+            "spans": len(spans),
+            "errors": errors,
+        })
+    return [TextContent(type="text", text=json.dumps(simplified, ensure_ascii=False))]
+
+
+async def _traces_get(args: _TracesGetArgs) -> list[TextContent]:
+    url = f"{VICTORIATRACES_URL}/jaeger/api/traces/{args.trace_id}"
+    async with httpx.AsyncClient(timeout=10) as client:
+        resp = await client.get(url)
+        resp.raise_for_status()
+    data = resp.json()
+    traces = data.get("data", [])
+    if not traces:
+        return [TextContent(type="text", text=json.dumps({"error": "Trace not found"}))]
+    t = traces[0]
+    spans = t.get("spans", [])
+    result = {
+        "traceID": t.get("traceID"),
+        "spans": [
+            {
+                "operationName": s.get("operationName"),
+                "duration_ms": round(s.get("duration", 0) / 1000, 2),
+                "tags": {tag["key"]: tag["value"] for tag in s.get("tags", [])},
+            }
+            for s in spans
+        ],
+    }
+    return [TextContent(type="text", text=json.dumps(result, ensure_ascii=False))]
+
+
+_register("logs_search", "Search structured logs in VictoriaLogs by LogsQL query and time range.", _LogsSearchArgs, _logs_search)
+_register("logs_error_count", "Count error-level log entries for a service over a time window.", _LogsErrorCountArgs, _logs_error_count)
+_register("traces_list", "List recent traces for a service from VictoriaTraces.", _TracesListArgs, _traces_list)
+_register("traces_get", "Fetch a specific trace by ID from VictoriaTraces.", _TracesGetArgs, _traces_get)
