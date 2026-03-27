@@ -57,27 +57,16 @@ You can now query the nanobot agent for:
 
 ## Task 1C — Skill prompt
 
-## Task 1C — Skill prompt
-
 **Question:** Show me the scores  
-**Answer:** If no lab specified, agent asks which lab or lists available labs and shows overall score statistics:
+**Answer:** Agent asks which lab if not specified and shows overview table with Avg Score, Students, Submissions. Example output:
 
-| Lab                                                      | Avg Score | Students | Submissions |
-|----------------------------------------------------------|-----------|----------|-------------|
-| Lab 01 – Products, Architecture & Roles                  | 80.17%    | 258      | 3,916       |
-| Lab 02 — Run, Fix, and Deploy a Backend Service          | 64.45%    | 147      | 541         |
-| Lab 03 — Backend API: Explore, Debug, Implement, Deploy  | 61.75%    | 174      | 834         |
-| Lab 04 — Testing, Front-end, and AI Agents               | 60.11%    | 246      | 1,462       |
-| Lab 05 — Data Pipeline and Analytics Dashboard           | 68.49%    | 250      | 1,337       |
-| Lab 06 — Build Your Own Agent                            | 50.92%    | 245      | 3,175       |
-| Lab 07 — Build a Client with an AI Coding Agent          | 67.43%    | 237      | 2,733       |
-| lab-08                                                   | 69.58%    | 56       | 322         |
-
-**Key Insights:**
-
-- Highest avg score: Lab 01 (80.17%)  
-- Lowest avg score: Lab 06 (50.92%)  
-- Most submissions: Lab 01 (3,916)  
-- Most students: Lab 01 (258)  
-
-> Agent also asks which lab you want to explore for more detailed task-by-task scores, top learners, group performance, and pass rates.
+| Lab | Avg Score | Students | Submissions |
+|-----|-----------|----------|-------------|
+| Lab 01 – Products, Architecture & Roles | 80.17% | 258 | 3,916 |
+| Lab 02 — Run, Fix, and Deploy a Backend Service | 64.45% | 147 | 541 |
+| Lab 03 — Backend API: Explore, Debug, Implement, Deploy | 61.75% | 174 | 834 |
+| Lab 04 — Testing, Front-end, and AI Agents | 60.11% | 246 | 1,462 |
+| Lab 05 — Data Pipeline and Analytics Dashboard | 68.49% | 250 | 1,337 |
+| Lab 06 — Build Your Own Agent | 50.92% | 245 | 3,175 |
+| Lab 07 — Build a Client with an AI Coding Agent | 67.43% | 237 | 2,733 |
+| lab-08 | 69.58% | 56 | 322 |
