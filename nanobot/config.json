@@ -255,7 +255,7 @@
       "intervalS": 1800
     }
   },
-  "tools": {
+"tools": {
     "web": {
       "proxy": null,
       "search": {
@@ -270,6 +270,11 @@
       "pathAppend": ""
     },
     "restrictToWorkspace": false,
-    "mcpServers": {}
+    "mcpServers": {
+      "lms": {
+        "url": "http://localhost:42004",
+        "api_key": "my-secret-api-key"
+      }
+    }
   }
 }
