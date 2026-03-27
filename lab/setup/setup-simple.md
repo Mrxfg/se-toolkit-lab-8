@@ -75,7 +75,7 @@ We refer to your fork as `fork` and to the original repo as `upstream`.
    Replace **`YOUR_GITHUB_USERNAME`** with your GitHub username.
 
    > [!NOTE]
-   > The `--recurse-submodules` flag clones the [submodules](../../wiki/git.md#submodule) included in the repository, including the `Qwen Code` API, `packages/nanobot-ai`, and `nanobot-websocket-channel`.
+   > The `--recurse-submodules` flag clones the Qwen Code API [submodule](../../wiki/git.md#submodule) included in the repository.
 
 2. Open the forked repo in `VS Code` through `Remote-SSH`.
 
@@ -324,7 +324,7 @@ The Qwen Code API is included as a Docker Compose service in this lab. You just 
 > [!NOTE]
 > If you already have a Qwen Code API key from a previous lab, use the same one. Set it as `QWEN_CODE_API_KEY` in `.env.docker.secret` (step 1.2).
 
-If you need a new key, follow the [Qwen Code API setup guide](../../wiki/qwen-code-api.md#get-an-api-key).
+If you need a new key, follow the [Qwen Code API setup guide](../../wiki/qwen-code-api.md#qwen-code-api-key).
 
 Verify the API works:
 

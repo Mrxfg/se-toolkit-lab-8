@@ -27,7 +27,7 @@
   - [7.6 OBER-Compatible Data Schema](#76-ober-compatible-data-schema)
   - [7.7 AI Agent — Standalone WebSocket Relay](#77-ai-agent--standalone-websocket-relay)
   - [7.8 Structured Message Protocol](#78-structured-message-protocol)
-  - [7.9 Per-User Authentication via WebSocket Query Parameter](#79-per-user-authentication-via-websocket-query-parameter)
+  - [7.9 Access Control via WebSocket Query Parameter](#79-access-control-via-websocket-query-parameter)
 
 ---
 
@@ -164,7 +164,7 @@ graph TD
 | FastAPI      | Python, FastAPI, SQLModel, Uvicorn | REST API: handles all business logic, validates Bearer token on every request, and exposes auto-generated Swagger UI at `/docs`.                                                                                                                           |
 | PostgreSQL   | PostgreSQL                         | Relational database: stores the `item`, `learner`, and `interacts` tables. Initialised with schema and seed data from `init.sql` on first startup.                                                                                                         |
 | pgAdmin      | pgAdmin 4                          | Web-based database management UI: lets admins inspect tables, run SQL queries, and browse the data.                                                                                                                                                        |
-| Nanobot      | Python, nanobot-ai                 | AI agent gateway: accepts WebSocket connections on port 8765, routes messages to an LLM agent that can query the LMS backend via MCP tools. See [nanobot.md](nanobot.md) for internals.                                                                    |
+| Nanobot      | Python, nanobot-ai                 | AI agent gateway: accepts WebSocket connections on port 8765, routes messages to an LLM agent that can query the LMS backend via MCP tools. See [nanobot.md](../../wiki/nanobot.md) for internals.                                                         |
 | Telegram Bot | Python, aiogram                    | Standalone Telegram bot: handles `/start` and `/help` locally; forwards all other messages to nanobot over WebSocket. Per-user API key auth via `/login`.                                                                                                  |
 |              |                                    |                                                                                                                                                                                                                                                            |
 

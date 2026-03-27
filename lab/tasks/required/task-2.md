@@ -18,18 +18,9 @@ In Task 1 you ran `nanobot agent` from the VM terminal. For production, nanobot 
 
 ### What to do in Part A
 
-1. Create a repo-local `nanobot/` project from the config and workspace you built in Task 1:
+1. Reuse the repo-local `nanobot/` project you created in Task 1.
 
-   ```terminal
-   uv init nanobot
-   cd nanobot
-   uv add nanobot-ai --path ../packages/nanobot-ai
-   uv add lms-mcp --path ../mcp
-   cp ~/.nanobot/config.json ./config.json
-   cp -R ~/.nanobot/workspace ./workspace
-   cd ..
-   ```
-
+   It already contains your `config.json`, `workspace/`, and the dependencies you added there.
    From this point on, treat `nanobot/` inside the repository as the deployable copy of your agent project.
    When you change agent config or skills for the Docker deployment, edit the files in `nanobot/`.
 
