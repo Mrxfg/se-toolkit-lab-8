@@ -105,3 +105,25 @@ The agent found the issue using both logs and traces:
 - All database queries failing
 
 **What happened:** The Learning Management Service lost its connection to PostgreSQL. When it tried to query the `item` table, the connection was already closed, causing cascade failures.
+
+## Task 4B — Proactive health check
+
+Cron job created to run every 2 minutes. With PostgreSQL stopped, the agent proactively reported:
+
+**Status:** UNHEALTHY
+- Error Count: 1 (last 2 min)
+- Root Cause: Database Connection Failure — DNS resolution error on `item` table SELECT
+- Two failed requests: GET /items/ → 404 at 12:03:03 and 12:01:35
+- Authentication succeeded but DB queries failed
+
+## Task 4C — Bug fix and recovery
+
+**Root cause:** In `backend/app/routers/items.py`, the `get_items()` handler caught all exceptions and re-raised them as `HTTP 404 Not Found`, hiding the real database error.
+
+**Fix:** Removed the try/except block — exceptions now propagate and trigger the global `unhandled_exception_handler`, returning `HTTP 500` with the real error details.
+
+**Post-fix failure check:** After fix, agent correctly reported HTTP 500 with real stack trace:
+- `socket.gaierror: [Errno -2] Name or service not known`
+- asyncpg DNS resolution failure visible in traceback
+
+**Recovery:** After PostgreSQL restart, system returned to healthy state.
