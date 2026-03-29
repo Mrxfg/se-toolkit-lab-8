@@ -86,3 +86,22 @@ WebSocket test:
 ```
 
 Flutter client accessible at http://10.93.25.213:42002/flutter — agent responds to messages via WebSocket channel.
+
+## Task 4A — Multi-step investigation
+
+With PostgreSQL stopped, asked the agent "What went wrong?":
+
+The agent found the issue using both logs and traces:
+
+**Root Cause:** Database Connection Lost — PostgreSQL connection was closed.
+
+**Evidence from logs:**
+- `sqlalchemy.dialects.postgresql.asyncpg.InterfaceError: connection is closed`
+- SQL: `SELECT item.id, item.type, item.parent_id... FROM item`
+
+**Impact:**
+- LMS health check returns "unhealthy" (HTTP 404)
+- `/items/` endpoint returning 404 errors
+- All database queries failing
+
+**What happened:** The Learning Management Service lost its connection to PostgreSQL. When it tried to query the `item` table, the connection was already closed, causing cascade failures.
