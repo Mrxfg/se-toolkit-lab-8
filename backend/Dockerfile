@@ -1,69 +1,53 @@
-# Adapted from https://github.com/astral-sh/uv-docker-example/blob/fa761744819c05f4ce207bde1f0a396f6be3915f/multistage.Dockerfile
-# Also see https://docs.astral.sh/uv/guides/integration/docker/
-
-# ---
-# Stage 1: build the application in the `/app` directory.
-# ---
+# backend/Dockerfile
+# Multi-stage build with uv and Python
 
 ARG REGISTRY_PREFIX_DOCKER_HUB
+
+# --- Stage 1: build application ---
 FROM ${REGISTRY_PREFIX_DOCKER_HUB}astral/uv:python3.14-bookworm-slim AS builder
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
-
-# Omit development dependencies
 ENV UV_NO_DEV=1
-
-# Disable Python downloads, because we want to use the system interpreter
-# across both images. If using a managed Python version, it needs to be
-# copied from the build image into the final image; see `standalone.Dockerfile`
-# for an example.
 ENV UV_PYTHON_DOWNLOADS=0
 
 WORKDIR /app
-COPY --from=workspace pyproject.toml uv.lock /app/
-COPY pyproject.toml /app/backend/pyproject.toml
 
+# Copy root-level pyproject.toml and uv.lock from repo root
+COPY pyproject.toml uv.lock /app/
+
+# Backend package sync
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-workspace --package lms-backend
 
+# Copy backend source code
 COPY . /app/backend
 
+# Sync again with uv
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --package lms-backend
 
+# Install OpenTelemetry auto-instrumentation
 RUN /app/.venv/bin/opentelemetry-bootstrap -a install
 
-# ---
-# Stage 2: use a final image without uv
-# ---
-
-ARG REGISTRY_PREFIX_DOCKER_HUB
+# --- Stage 2: final image ---
 FROM ${REGISTRY_PREFIX_DOCKER_HUB}python:3.14.2-slim-bookworm
-# It is important to use the image that matches the builder, as the path to the
-# Python executable must be the same, e.g., using `python:3.11-slim-bookworm`
-# will fail.
 
-# Set environment variables for Python and application
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-# Make sure we use UTF-8 encoding
 ENV LANG=C.UTF-8
 
-# Setup a non-root user
+# Create non-root user
 RUN groupadd --system --gid 999 nonroot \
     && useradd --system --gid 999 --uid 999 --create-home nonroot
 
-# Copy the application from the builder
+# Copy built app from builder stage
 COPY --from=builder --chown=nonroot:nonroot /app /app
 
-# Place executables in the environment at the front of the path
+# Set Python and backend paths
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH="/app/backend"
 
-# Use the non-root user to run our application
 USER nonroot
-
-# Use `/app` as the working directory
 WORKDIR /app
 
-# Run the FastAPI application
-CMD ["opentelemetry-instrument", "uvicorn", "app.main:app"]
+# Run backend with OpenTelemetry instrumentation
+CMD ["opentelemetry-instrument", "uvicorn", "backend.app.main:app"]

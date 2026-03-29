@@ -86,3 +86,44 @@ WebSocket test:
 ```
 
 Flutter client accessible at http://10.93.25.213:42002/flutter — agent responds to messages via WebSocket channel.
+
+## Task 4A — Multi-step investigation
+
+With PostgreSQL stopped, asked the agent "What went wrong?":
+
+The agent found the issue using both logs and traces:
+
+**Root Cause:** Database Connection Lost — PostgreSQL connection was closed.
+
+**Evidence from logs:**
+- `sqlalchemy.dialects.postgresql.asyncpg.InterfaceError: connection is closed`
+- SQL: `SELECT item.id, item.type, item.parent_id... FROM item`
+
+**Impact:**
+- LMS health check returns "unhealthy" (HTTP 404)
+- `/items/` endpoint returning 404 errors
+- All database queries failing
+
+**What happened:** The Learning Management Service lost its connection to PostgreSQL. When it tried to query the `item` table, the connection was already closed, causing cascade failures.
+
+## Task 4B — Proactive health check
+
+Cron job created to run every 2 minutes. With PostgreSQL stopped, the agent proactively reported:
+
+**Status:** UNHEALTHY
+- Error Count: 1 (last 2 min)
+- Root Cause: Database Connection Failure — DNS resolution error on `item` table SELECT
+- Two failed requests: GET /items/ → 404 at 12:03:03 and 12:01:35
+- Authentication succeeded but DB queries failed
+
+## Task 4C — Bug fix and recovery
+
+**Root cause:** In `backend/app/routers/items.py`, the `get_items()` handler caught all exceptions and re-raised them as `HTTP 404 Not Found`, hiding the real database error.
+
+**Fix:** Removed the try/except block — exceptions now propagate and trigger the global `unhandled_exception_handler`, returning `HTTP 500` with the real error details.
+
+**Post-fix failure check:** After fix, agent correctly reported HTTP 500 with real stack trace:
+- `socket.gaierror: [Errno -2] Name or service not known`
+- asyncpg DNS resolution failure visible in traceback
+
+**Recovery:** After PostgreSQL restart, system returned to healthy state.
